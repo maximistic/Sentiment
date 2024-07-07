@@ -9,6 +9,21 @@ from sklearn.linear_model import LinearRegression
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import matplotlib.pyplot as plt
 
+# Step 1: Data Collection
+news_api_key = 'api_key'
+ticker = 'NVDA'
+url = f'https://newsapi.org/v2/everything?q={ticker}&apiKey={news_api_key}'
+
+response = requests.get(url)
+if response.status_code == 200:
+    news_data = response.json()['articles']
+    news_df = pd.DataFrame(news_data)
+    news_df.to_csv(f'{ticker}_news.csv', index=False)
+    print(f"News articles for {ticker} saved to {ticker}_news.csv")
+else:
+    print(f"Error: {response.status_code}")
+    print("Response:", response.json())
+    
 #Pre-processing
 def preprocess_data(df):
     df['publishedAt'] = pd.to_datetime(df['publishedAt']).dt.date
