@@ -1,4 +1,3 @@
-#dependencies and libraries
 !pip install vaderSentiment
 import requests
 import pandas as pd
@@ -23,21 +22,14 @@ if response.status_code == 200:
 else:
     print(f"Error: {response.status_code}")
     print("Response:", response.json())
-    
-#Pre-processing
+
+# Pre-processing
 def preprocess_data(df):
     df['publishedAt'] = pd.to_datetime(df['publishedAt']).dt.date
     df['content'] = df['content'].fillna('')
     return df
 
 news_df = preprocess_data(news_df)
-
-# Feature Engineering
-# Normalize the sentiment scores to a scale of -5 to 5
-def scale_sentiment(score):
-    return score * 5
-
-sentiment_by_date['scaled_sentiment'] = sentiment_by_date['sentiment'].apply(scale_sentiment)
 
 # Sentiment Analysis
 analyzer = SentimentIntensityAnalyzer()
@@ -51,15 +43,22 @@ news_df['sentiment'] = news_df['content'].apply(analyze_sentiment)
 # Aggregate sentiment scores by date
 sentiment_by_date = news_df.groupby('publishedAt').agg({'sentiment': 'mean'}).reset_index()
 
+# Feature Engineering
+# Normalize the sentiment scores to a scale of -5 to 5
+def scale_sentiment(score):
+    return score * 5
+
+sentiment_by_date['scaled_sentiment'] = sentiment_by_date['sentiment'].apply(scale_sentiment)
+
 # Model Training
-# Splitting the data 
+# Splitting the data
 sentiment_by_date['date_numeric'] = sentiment_by_date['publishedAt'].apply(lambda date: date.toordinal())
 X = sentiment_by_date[['date_numeric']]
 y = sentiment_by_date['scaled_sentiment']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Linear Regression model 
+# Linear Regression model
 model = LinearRegression()
 model.fit(X_train, y_train)
 
@@ -72,15 +71,15 @@ print(f"Mean Squared Error: {mse}")
 
 # Plotting
 plt.figure(figsize=(14, 7))
-plt.plot(X_test['date_numeric'], y_test, 'b.', label='Actual Sentiment')
-plt.plot(X_test['date_numeric'], y_pred, 'r.', label='Predicted Sentiment')
+plt.scatter(X_test['date_numeric'], y_test, color='blue', label='Actual Sentiment')
+plt.scatter(X_test['date_numeric'], y_pred, color='red', label='Predicted Sentiment')
 plt.xlabel('Date')
 plt.ylabel('Sentiment Score')
 plt.legend()
 plt.show()
 
 # Function to predict sentiment for a given date
-def predict_sentiment(date, model, sentiment_by_date):
+def predict_sentiment(date, model):
     date_numeric = date.toordinal()
     prediction = model.predict([[date_numeric]])
     return prediction[0]
